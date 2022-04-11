@@ -1,0 +1,48 @@
+@import "~antd/lib/style/themes/default.less";
+@import "~antd/dist/antd.less"; // Import Ant Design styles by less entry
+@import url("https://fonts.googleapis.com/css2?family=Prompt&display=swap");
+@media (min-width: @screen-xs-min) {
+  .mobile {
+    display: none;
+  }
+}
+@media (max-width: @screen-sm) {
+  .desktop {
+    display: none;
+  }
+}
+@primary-color: #1da57a;
+@font-family: "Prompt", sans-serif;
+@layout-body-background: #e6e6e6;
+@layout-header-color: @gray-1;
+@layout-header-background: #f6903d;
+@carousel-dot-width: 20px;
+@carousel-dot-height: 8px;
+@carousel-dot-active-width: 32px;
+
+// color palettes
+@gray-base: #5e5e5e;
+@gray-1: #ffffff;
+@gray-2: #e2e2e2;
+@gray-3: #c6c6c6;
+@gray-4: #ababab;
+@gray-5: #919191;
+@gray-6: #777777;
+@gray-7: #5e5e5e;
+@gray-8: #474747;
+@gray-9: #303030;
+@gray-10: #1b1b1b;
+@btn-font-weight: 500;
+
+.carousel {
+  height: "160px";
+  color: "#fff";
+  line-height: "160px";
+  text-align: "center";
+  background-color: "#364d79";
+}
+
+.hovernow {
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.3s ease-in-out;
+}
