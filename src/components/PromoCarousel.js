@@ -3,7 +3,7 @@ import { Carousel } from "antd";
 
 const PromoCarousel = () => {
   const contentStyle = {
-    height: 600,
+    height: 734,
     color: "#fff",
     lineHeight: "160px",
     textAlign: "center",

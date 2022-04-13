@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layout, Button } from "antd";
 import {
   BellOutlined,
@@ -8,6 +8,9 @@ import {
 import { Row, Col, Tabs, List, Card } from "antd";
 import PromoCarousel from "../components/PromoCarousel";
 import { Offcanvas } from "react-bootstrap";
+import promotionService from "../services/promotion.service";
+import PromoSelect from "../components/PromoSelect";
+import Cart from "../components/Cart";
 
 const { Header, Footer, Content } = Layout;
 const { TabPane } = Tabs;
@@ -15,42 +18,36 @@ const { Meta } = Card;
 
 const Home = () => {
   const [show, setShow] = useState(false);
+  const [promoData, setPromoData] = useState([]);
+  const [item, setItem] = useState({});
+  const [cartShow, setCartShow] = useState(false);
 
-  const handleClose = () => setShow(false);
-  const toggleShow = () => setShow((s) => !s);
-  const data = [
-    {
-      title: "Title 1",
-    },
-    {
-      title: "Title 2",
-    },
-    {
-      title: "Title 3",
-    },
-    {
-      title: "Title 4",
-    },
-    {
-      title: "Title 5",
-    },
-    {
-      title: "Title 6",
-    },
-  ];
+  const handleClose = () => {
+    setShow(false);
+  };
+  const handleCloseCart = () => {
+    setCartShow(false);
+  };
+  const toggleShow = (items) => {
+    setItem(items);
+    setShow((s) => !s);
+  };
+  const toggleShowCart = () => {
+    setCartShow((s) => !s);
+  };
+  useEffect(() => {
+    promotionService
+      .getCurrentPromotion()
+      .then((res) => setPromoData(res.data))
+      .catch((err) => console.log(err));
+    return () => {};
+  }, []);
 
   return (
     <>
       <Layout style={{ minHeight: "100vh" }}>
-        <Offcanvas show={show} onHide={handleClose} placement="end">
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Offcanvas</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            Some text as placeholder. In real life you can have the elements you
-            have chosen. Like, text, images, lists, etc.
-          </Offcanvas.Body>
-        </Offcanvas>
+        <PromoSelect show={show} handleClose={handleClose} item={item} />
+        <Cart show={cartShow} handleClose={handleCloseCart} />
         <Header className="desktop">
           <div style={{ display: "flex" }}>
             <div style={{ flex: 1 }}>
@@ -97,71 +94,66 @@ const Home = () => {
           >
             <div
               style={{
-                height: "600px",
-                width: "1200px",
+                height: "734px",
+                width: "1174px",
                 padding: 0,
                 backgroundColor: "white",
               }}
               className="hovernow"
             >
               <Row>
-                <Col md={16}>
+                <Col md={15}>
                   <PromoCarousel />
                 </Col>
-                <Col md={8} style={{ padding: "16px 0px" }}>
+                <Col md={9} style={{ padding: "16px 0px" }}>
                   <Row
                     style={{
                       overflow: "auto",
-                      height: 520,
-                      padding: "0px 32px",
+                      height: 650,
+                      padding: "0px 20px",
                     }}
                   >
-                    <Tabs defaultActiveKey="1" onChange={() => {}}>
+                    <Tabs
+                      defaultActiveKey="1"
+                      onChange={() => {}}
+                      style={{ width: "100%" }}
+                    >
                       <TabPane tab="โปรโมชัน" key="1">
                         <List
                           grid={{ column: 2, gutter: 16 }}
-                          dataSource={data}
-                          renderItem={(item) => (
-                            <List.Item
-                              style={{
-                                borderWidth: 1,
-                                borderColor: "#e4e4e4",
-                                borderStyle: "solid",
-                              }}
-                              className="onhover"
-                            >
+                          dataSource={promoData}
+                          renderItem={(items) => (
+                            <List.Item className="onhover">
                               <img
-                                width={158}
-                                height={158}
+                                width={192}
+                                height={192}
                                 style={{ objectFit: "cover" }}
-                                src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                src={items.image?.imgObj}
                                 alt=""
                               />
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  backgroundColor: "white",
-                                  top: 138,
-                                  right: 9,
-                                }}
-                              >
-                                100sss฿
-                              </div>
+                              <div className="price">{items.promoPrice}฿</div>
                               <Row>
-                                <Col span={20}>
+                                <Col span={18} style={{ padding: "8px" }}>
                                   <div className="description">
-                                    sasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasdssasds
+                                    {items.promoName}
                                   </div>
                                 </Col>
-                                <Col span={4}>
+                                <Col span={6}>
                                   <div
                                     style={{
-                                      padding: "12px 0px",
+                                      width: "100%",
+                                      height: "100%",
+                                      flex: 1,
+                                      padding: 14,
+                                      justifyContent: "center",
+                                      alignItems: "center",
                                     }}
                                   >
                                     <PlusCircleOutlined
                                       className="plus"
-                                      onClick={() => {}}
+                                      onClick={() => {
+                                        toggleShow(items);
+                                      }}
                                     />
                                   </div>
                                 </Col>
@@ -183,6 +175,7 @@ const Home = () => {
                       type="primary"
                       block
                       style={{ display: "flex", flexDirection: "row" }}
+                      onClick={toggleShowCart}
                     >
                       <div
                         style={{
