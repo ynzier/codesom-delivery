@@ -24,7 +24,7 @@ const PromoSelect = ({ show, handleClose, item }) => {
             max={100000}
             precision={0}
             defaultValue={1}
-            style={{ marginRight: 16, textAlign: "right" }}
+            style={{ textAlign: "right" }}
           />
           <Button style={{ width: "100%" }} type="primary" block>
             เพิ่มในออเดอร์ {item.promoPrice}฿

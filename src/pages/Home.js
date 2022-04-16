@@ -1,27 +1,48 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Button } from "antd";
 import {
   BellOutlined,
   PlusCircleOutlined,
   ShoppingFilled,
 } from "@ant-design/icons";
-import { Row, Col, Tabs, List, Card } from "antd";
+import { Row, Col, Tabs, List, Layout, Button } from "antd";
 import PromoCarousel from "../components/PromoCarousel";
-import { Offcanvas } from "react-bootstrap";
 import promotionService from "../services/promotion.service";
 import PromoSelect from "../components/PromoSelect";
-import Cart from "../components/Cart";
+import Cart from "components/Cart";
+import DeliveryInfo from "components/DeliveryInfo";
+import MapModal from "components/MapModal";
 
 const { Header, Footer, Content } = Layout;
 const { TabPane } = Tabs;
-const { Meta } = Card;
 
 const Home = () => {
   const [show, setShow] = useState(false);
+  const [mapConfirm, setMapConfirm] = useState(false);
   const [promoData, setPromoData] = useState([]);
   const [item, setItem] = useState({});
+  const [showDelivery, setShowDelivery] = useState(false);
   const [cartShow, setCartShow] = useState(false);
-
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [confirmPosition, setConfirmPosition] = useState({});
+  const handleShowMap = () => {
+    setShowMapModal(true);
+  };
+  const handleConfirmMap = (markerPosition) => {
+    console.log(markerPosition);
+    setShowMapModal((s) => !s);
+    setMapConfirm(true);
+    setConfirmPosition(markerPosition);
+  };
+  const handleCancelMap = () => {
+    setShowMapModal((s) => !s);
+  };
+  const handleShowDelivery = () => {
+    setCartShow(false);
+    setShowDelivery(true);
+  };
+  const handleSetDelivery = () => {
+    setShowDelivery((s) => !s);
+  };
   const handleClose = () => {
     setShow(false);
   };
@@ -40,6 +61,13 @@ const Home = () => {
       .getCurrentPromotion()
       .then((res) => setPromoData(res.data))
       .catch((err) => console.log(err));
+
+    if ("geolocation" in navigator) {
+      console.log("Available");
+    } else {
+      console.log("Not Available");
+    }
+
     return () => {};
   }, []);
 
@@ -47,7 +75,16 @@ const Home = () => {
     <>
       <Layout style={{ minHeight: "100vh" }}>
         <PromoSelect show={show} handleClose={handleClose} item={item} />
-        <Cart show={cartShow} handleClose={handleCloseCart} />
+        <Cart
+          show={cartShow}
+          handleClose={handleCloseCart}
+          handleShowDelivery={handleShowDelivery}
+        />
+        <MapModal
+          showMapModal={showMapModal}
+          handleConfirmMap={handleConfirmMap}
+          handleCancelMap={handleCancelMap}
+        />
         <Header className="desktop">
           <div style={{ display: "flex" }}>
             <div style={{ flex: 1 }}>
@@ -105,91 +142,100 @@ const Home = () => {
                 <Col md={15}>
                   <PromoCarousel />
                 </Col>
-                <Col md={9} style={{ padding: "16px 0px" }}>
-                  <Row
-                    style={{
-                      overflow: "auto",
-                      height: 650,
-                      padding: "0px 20px",
-                    }}
-                  >
-                    <Tabs
-                      defaultActiveKey="1"
-                      onChange={() => {}}
-                      style={{ width: "100%" }}
+                {showDelivery ? (
+                  <DeliveryInfo
+                    handleSetDelivery={handleSetDelivery}
+                    handleShowModal={handleShowMap}
+                    confirmPosition={confirmPosition}
+                    mapConfirm={mapConfirm}
+                  />
+                ) : (
+                  <Col md={9} style={{ padding: "16px 0px" }}>
+                    <Row
+                      style={{
+                        overflow: "auto",
+                        height: 650,
+                        padding: "0px 20px",
+                      }}
                     >
-                      <TabPane tab="โปรโมชัน" key="1">
-                        <List
-                          grid={{ column: 2, gutter: 16 }}
-                          dataSource={promoData}
-                          renderItem={(items) => (
-                            <List.Item className="onhover">
-                              <img
-                                width={192}
-                                height={192}
-                                style={{ objectFit: "cover" }}
-                                src={items.image?.imgObj}
-                                alt=""
-                              />
-                              <div className="price">{items.promoPrice}฿</div>
-                              <Row>
-                                <Col span={18} style={{ padding: "8px" }}>
-                                  <div className="description">
-                                    {items.promoName}
-                                  </div>
-                                </Col>
-                                <Col span={6}>
-                                  <div
-                                    style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      flex: 1,
-                                      padding: 14,
-                                      justifyContent: "center",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <PlusCircleOutlined
-                                      className="plus"
-                                      onClick={() => {
-                                        toggleShow(items);
-                                      }}
-                                    />
-                                  </div>
-                                </Col>
-                              </Row>
-                            </List.Item>
-                          )}
-                        />
-                      </TabPane>
-                      <TabPane tab="เมนูทั้งหมด" key="2">
-                        Content of Tab Pane 2
-                      </TabPane>
-                      <TabPane tab="ข้อมูลสาขา" key="3">
-                        Content of Tab Pane 2
-                      </TabPane>
-                    </Tabs>
-                  </Row>
-                  <div style={{ padding: 20 }}>
-                    <Button
-                      type="primary"
-                      block
-                      style={{ display: "flex", flexDirection: "row" }}
-                      onClick={toggleShowCart}
-                    >
-                      <div
-                        style={{
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
+                      <Tabs
+                        defaultActiveKey="1"
+                        onChange={() => {}}
+                        style={{ width: "100%" }}
                       >
-                        <ShoppingFilled style={{ marginRight: 4 }} />1
-                      </div>
-                      <div style={{ flex: 1 }}>ออเดอร์ของคุณ</div>
-                      <div>80฿</div>
-                    </Button>
-                  </div>
-                </Col>
+                        <TabPane tab="โปรโมชัน" key="1">
+                          <List
+                            grid={{ column: 2, gutter: 16 }}
+                            dataSource={promoData}
+                            renderItem={(items) => (
+                              <List.Item className="onhover">
+                                <img
+                                  width={192}
+                                  height={192}
+                                  style={{ objectFit: "cover" }}
+                                  src={items.image?.imgObj}
+                                  alt=""
+                                />
+                                <div className="price">{items.promoPrice}฿</div>
+                                <Row>
+                                  <Col span={18} style={{ padding: "8px" }}>
+                                    <div className="description">
+                                      {items.promoName}
+                                    </div>
+                                  </Col>
+                                  <Col span={6}>
+                                    <div
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        flex: 1,
+                                        padding: 14,
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <PlusCircleOutlined
+                                        className="plus"
+                                        onClick={() => {
+                                          toggleShow(items);
+                                        }}
+                                      />
+                                    </div>
+                                  </Col>
+                                </Row>
+                              </List.Item>
+                            )}
+                          />
+                        </TabPane>
+                        <TabPane tab="เมนูทั้งหมด" key="2">
+                          Content of Tab Pane 2
+                        </TabPane>
+                        <TabPane tab="ข้อมูลสาขา" key="3">
+                          Content of Tab Pane 2
+                        </TabPane>
+                      </Tabs>
+                    </Row>
+                    <div style={{ padding: 20 }}>
+                      <Button
+                        type="primary"
+                        block
+                        style={{ display: "flex", flexDirection: "row" }}
+                        onClick={toggleShowCart}
+                      >
+                        <div
+                          style={{
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
+                          <ShoppingFilled style={{ marginRight: 4 }} />1
+                        </div>
+                        <div style={{ flex: 1 }}>ออเดอร์ของคุณ</div>
+                        <div>80฿</div>
+                      </Button>
+                    </div>
+                  </Col>
+                )}
               </Row>
             </div>
           </div>
