@@ -7,7 +7,13 @@ const containerStyle = {
   height: "400px",
 };
 
-const MapComponent = ({ marker, zoom, center, onCenterChanged }) => {
+const MapComponent = ({
+  marker,
+  zoom,
+  center,
+  onCenterChanged,
+  getCurrent,
+}) => {
   const { isLoaded, hasError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDVQ7VpCG8QO7OYtIFDZVGzQCmNld4bdm8", // ,
   });
@@ -33,14 +39,6 @@ const MapComponent = ({ marker, zoom, center, onCenterChanged }) => {
     }
   }, [mapRef, onCenterChanged]);
 
-  const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition((position) =>
-      onCenterChanged({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      })
-    );
-  };
   if (!isLoaded) {
     return <div>{"loading"}</div>;
   }
@@ -73,7 +71,10 @@ const MapComponent = ({ marker, zoom, center, onCenterChanged }) => {
           width: 160,
         }}
         className="get-current-location"
-        onClick={getCurrentLocation}
+        onClick={() => {
+          mapRef.current.panTo(center);
+          getCurrent();
+        }}
       >
         <div
           style={{

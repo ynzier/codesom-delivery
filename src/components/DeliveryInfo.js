@@ -12,7 +12,7 @@ const DeliveryInfo = ({
   confirmPosition,
   mapConfirm,
 }) => {
-  const { isLoaded, hasError } = useLoadScript({
+  const { isLoaded } = useLoadScript({
     googleMapsApiKey: "AIzaSyDVQ7VpCG8QO7OYtIFDZVGzQCmNld4bdm8", // ,
   });
   return (
@@ -49,29 +49,31 @@ const DeliveryInfo = ({
           placeholder="คำอธิบายการเดินทาง"
         />
         {mapConfirm ? (
-          <GoogleMap
-            mapContainerStyle={{ width: "100%", height: 300 }}
-            center={confirmPosition}
-            options={{ disableDefaultUI: true }}
-            zoom={18}
-          >
-            <Marker position={confirmPosition} />
-            <Button
-              onClick={handleShowModal}
-              style={{
-                bottom: 0,
-                position: "absolute",
-                display: "flex",
-                flexDirection: "row",
-              }}
-              className="get-current-location"
+          isLoaded && (
+            <GoogleMap
+              mapContainerStyle={{ width: "100%", height: 300 }}
+              center={confirmPosition}
+              options={{ disableDefaultUI: true }}
+              zoom={18}
             >
-              <div style={{ marginRight: 4 }}>
-                <Icon icon="ci:edit" style={{ marginTop: 4 }} />
-              </div>
-              แก้ไขตำแหน่ง
-            </Button>
-          </GoogleMap>
+              <Marker position={confirmPosition} />
+              <Button
+                onClick={handleShowModal}
+                style={{
+                  bottom: 0,
+                  position: "absolute",
+                  display: "flex",
+                  flexDirection: "row",
+                }}
+                className="get-current-location"
+              >
+                <div style={{ marginRight: 4 }}>
+                  <Icon icon="ci:edit" style={{ marginTop: 4 }} />
+                </div>
+                แก้ไขตำแหน่ง
+              </Button>
+            </GoogleMap>
+          )
         ) : (
           <a
             style={{

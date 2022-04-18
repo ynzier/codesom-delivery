@@ -4,42 +4,63 @@ import { RightOutlined } from "@ant-design/icons";
 import NumberFormat from "react-number-format";
 import { InputNumber, Button, Row, Col, Space } from "antd";
 
-const PromoSelect = ({ show, handleClose, handleShowDelivery }) => {
+const PromoSelect = ({
+  show,
+  handleClose,
+  handleShowDelivery,
+  cart,
+  total,
+  handleEdit,
+}) => {
   return (
     <Offcanvas show={show} onHide={handleClose} placement="end">
       <Offcanvas.Body>
         <h5>ออเดอร์ของคุณ</h5>
         <hr />
-        <div
-          style={{ display: "flex", flexDirection: "row", gap: "12px 12px" }}
-        >
-          <div className="item-count">
-            <b>99</b>
-          </div>
+        {cart.map((obj) => {
+          return (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "12px 12px",
+                }}
+              >
+                <div className="item-count">
+                  <b>{obj.quantity}</b>
+                </div>
 
-          <span className="order-name">
-            Snow FlakeSnow FlakeSnow FlakeSnow FlakeSnow Flakewhite-space:
-            nowrap; overflow: hidden; text-overflow: ellipsis;Snow FlakeSnow
-            FlakeSnow Flake 1 + 1
-          </span>
-          <a className="edit-text">แก้ไข</a>
+                <span className="order-name">{obj.name}</span>
+                <a
+                  className="edit-text"
+                  onClick={() => {
+                    handleEdit({ promoId: obj.promoId, prId: obj.prId });
+                  }}
+                >
+                  แก้ไข
+                </a>
 
-          <NumberFormat
-            value={28000}
-            decimalScale={2}
-            fixedDecimalScale={true}
-            decimalSeparator="."
-            displayType={"text"}
-            thousandSeparator={true}
-            suffix="฿"
-            className="cart-price"
-          />
-        </div>
-        <hr />
+                <NumberFormat
+                  value={obj.total}
+                  decimalScale={2}
+                  fixedDecimalScale={true}
+                  decimalSeparator="."
+                  displayType={"text"}
+                  thousandSeparator={true}
+                  suffix="฿"
+                  className="cart-price"
+                />
+              </div>
+              <hr />
+            </>
+          );
+        })}
+
         <div style={{ display: "flex" }}>
           <span style={{ flex: 1 }}>ยอดรวมสินค้าในตะกร้า</span>
           <NumberFormat
-            value={28000}
+            value={total}
             decimalScale={2}
             fixedDecimalScale={true}
             decimalSeparator="."

@@ -1,7 +1,7 @@
 import http from "../http-common";
 const prefix = "/promotion";
-const getCurrentPromotion = async () => {
-  return await http.get(prefix + "/getCurrentPromotion");
+const getPromoForDelivery = async () => {
+  return await http.get(prefix + "/getPromoForDelivery");
 };
 
 const getPromotionById = async (promoId) => {
@@ -9,4 +9,4 @@ const getPromotionById = async (promoId) => {
     params: { promoId: promoId },
   });
 };
-export default { getCurrentPromotion, getPromotionById };
+export default { getPromoForDelivery, getPromotionById };

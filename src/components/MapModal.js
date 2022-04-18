@@ -4,10 +4,18 @@ import { Map } from "components/Map";
 const MapModal = ({ showMapModal, handleConfirmMap, handleCancelMap }) => {
   const [markerPosition, setMarkerPosition] = useState(undefined);
   const [mapCenter, setMapCenter] = useState(undefined);
-
+  const [currentPosition, setCurrentPosition] = useState(undefined);
+  const getCurrent = () => {
+    setMapCenter(currentPosition);
+    setMarkerPosition(currentPosition);
+  };
   useEffect(
     () =>
       navigator.geolocation.getCurrentPosition((position) => {
+        setCurrentPosition({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
         setMapCenter({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -42,6 +50,7 @@ const MapModal = ({ showMapModal, handleConfirmMap, handleCancelMap }) => {
         center={mapCenter}
         onCenterChanged={setMarkerPosition}
         marker={markerPosition}
+        getCurrent={getCurrent}
       />
     </Modal>
   );
