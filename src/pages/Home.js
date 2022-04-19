@@ -6,9 +6,19 @@ import {
   FrownOutlined,
 } from "@ant-design/icons";
 import NumberFormat from "react-number-format";
-import { Row, Col, Tabs, List, Layout, Button, ConfigProvider } from "antd";
+import {
+  Row,
+  Col,
+  Tabs,
+  List,
+  Layout,
+  Button,
+  ConfigProvider,
+  notification,
+} from "antd";
 import Preloader from "components/Preloader";
 import PromoCarousel from "../components/PromoCarousel";
+import OrderSummary from "components/OrderSummary";
 import { Icon } from "@iconify/react";
 import promotionService from "../services/promotion.service";
 import PromoSelect from "../components/PromoSelect";
@@ -18,6 +28,7 @@ import MapModal from "components/MapModal";
 import productService from "services/product.service";
 import branchService from "services/branch.service";
 import cartStorageService from "services/cartStorage.service";
+import lalamoveService from "services/lalamove.service";
 
 const { Header, Footer, Content } = Layout;
 const { TabPane } = Tabs;
@@ -31,7 +42,14 @@ const Home = () => {
   const [cart, setCart] = useState([]);
   const [show, setShow] = useState(false);
   const [total, setTotal] = useState(0);
+  const [toConfirm, setToConfirm] = useState(false);
+  const [selectBranch, setSelectBranch] = useState(0);
+  const [deliveryFare, setDeliveryFare] = useState(0);
+  const [routes, setRoutes] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [recipientInfo, setRecipientInfo] = useState({});
+  const [totalWeight, setTotalWeight] = useState(0);
   const [mapConfirm, setMapConfirm] = useState(false);
   const [promoData, setPromoData] = useState([]);
   const [branchData, setBranchData] = useState([]);
@@ -44,6 +62,40 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const handleShowMap = () => {
     setShowMapModal(true);
+  };
+  const handleSelectBranch = (index) => {
+    setDeliveryFare(routes[index].deliveryFare);
+    setSelectBranch(index);
+  };
+  const handleBackToConfirm = () => {
+    setToConfirm(false);
+  };
+  const handleRouteRequest = async (destinationInfo) => {
+    if (mapConfirm == false) {
+      return openNotificationWithIcon("error");
+    }
+    setRecipientInfo(destinationInfo);
+    const sendData = {
+      coordinates: {
+        lat: confirmPosition.lat.toString(),
+        lng: confirmPosition.lng.toString(),
+      },
+      address: destinationInfo.recipientAddr,
+      quantity: totalAmount,
+      weight: totalWeight,
+    };
+    console.log(sendData);
+    await lalamoveService
+      .getFare(sendData)
+      .then((res) => {
+        console.log(res.data);
+        setToConfirm(true);
+        setRecipientInfo(destinationInfo);
+        setRoutes(res.data);
+        setDeliveryFare(res.data[0].deliveryFare);
+        setFinalTotal(total + deliveryFare);
+      })
+      .catch((err) => console.log(err));
   };
   const fetchCart = () => {
     const prevCart = cartStorageService.getItem();
@@ -61,6 +113,11 @@ const Home = () => {
     setItem(getItem);
     setCartShow(false);
     setShow(true);
+  };
+  const handleClearCart = () => {
+    cartStorageService.clearCart();
+    setCartShow(false);
+    setItem({});
   };
   const handleConfirmMap = (markerPosition) => {
     setShowMapModal((s) => !s);
@@ -126,11 +183,31 @@ const Home = () => {
       (current, traveler) => current + traveler.quantity,
       0
     );
+    const tempWeight = prevCart.reduce(
+      (current, traveler) => current + traveler.totalWeight,
+      0
+    );
 
     setTotal(tempTotal);
     setTotalAmount(tempAmount);
+    setTotalWeight(tempWeight);
     return () => {};
   }, [item]);
+  useEffect(() => {
+    if (toConfirm) {
+      setDeliveryFare(routes[selectBranch].deliveryFare);
+      setFinalTotal(total + deliveryFare);
+    }
+    return () => {};
+  }, [selectBranch, toConfirm, routes, deliveryFare, total]);
+
+  const openNotificationWithIcon = (type) => {
+    notification[type]({
+      message: "เลือกพิกัด",
+      description:
+        "คุณลูกค้า กรุณาเลือกตำแหน่งที่ต้องการให้เราจัดส่งสินค้าให้ ก่อนทำรายการ",
+    });
+  };
 
   return (
     <>
@@ -143,8 +220,10 @@ const Home = () => {
           show={cartShow}
           handleClose={handleCloseCart}
           handleShowDelivery={handleShowDelivery}
+          handleClearCart={handleClearCart}
           cart={cart}
           total={total}
+          totalWeight={totalWeight}
           handleEdit={handleEdit}
         />
         <MapModal
@@ -210,12 +289,27 @@ const Home = () => {
                   <PromoCarousel promo={promoData} />
                 </Col>
                 {showDelivery ? (
-                  <DeliveryInfo
-                    handleSetDelivery={handleSetDelivery}
-                    handleShowModal={handleShowMap}
-                    confirmPosition={confirmPosition}
-                    mapConfirm={mapConfirm}
-                  />
+                  toConfirm ? (
+                    <OrderSummary
+                      cart={cart}
+                      routes={routes}
+                      recipientInfo={recipientInfo}
+                      handleSelectBranch={handleSelectBranch}
+                      selectBranch={selectBranch}
+                      total={total}
+                      finalTotal={finalTotal}
+                      deliveryFare={deliveryFare}
+                      handleBackToConfirm={handleBackToConfirm}
+                    />
+                  ) : (
+                    <DeliveryInfo
+                      handleSetDelivery={handleSetDelivery}
+                      handleShowModal={handleShowMap}
+                      confirmPosition={confirmPosition}
+                      mapConfirm={mapConfirm}
+                      handleRouteRequest={handleRouteRequest}
+                    />
+                  )
                 ) : (
                   <Col md={9} style={{ padding: "16px 0px" }}>
                     <Row

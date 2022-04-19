@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Offcanvas } from "react-bootstrap";
-import { InputNumber, Button, Row, Col, Space } from "antd";
+import { InputNumber, Button, Drawer, Col, Space } from "antd";
 import cartStorageService from "services/cartStorage.service";
 
 const PromoSelect = ({ show, handleClose, item }) => {
@@ -41,20 +40,34 @@ const PromoSelect = ({ show, handleClose, item }) => {
   }, [item]);
 
   return (
-    <Offcanvas show={show} onHide={handleClose} placement="end">
-      <Offcanvas.Header style={{ padding: 0 }}>
+    <Drawer
+      visible={show}
+      onClose={handleClose}
+      placement="right"
+      width={400}
+      closable={false}
+      bodyStyle={{
+        display: "flex",
+        flexDirection: "column",
+        padding: 0,
+      }}
+    >
+      <div style={{ flex: 1 }}>
         <img
-          width={"100%"}
-          height={"100%"}
+          width={400}
+          height={400}
           style={{ objectFit: "cover" }}
           src={item.image?.imgObj}
           alt=""
         />
-      </Offcanvas.Header>
-      <Offcanvas.Body>
-        <h5>{item.name}</h5>
-        <hr />
-        <span>{item.detail}</span>
+
+        <div style={{ padding: 24 }}>
+          <h5>{item.name}</h5>
+          <hr />
+          <span>{item.detail}</span>
+        </div>
+      </div>
+      <div style={{ padding: 24 }}>
         <div className="bottom-promo">
           <InputNumber
             min={inCart ? 0 : 1}
@@ -88,8 +101,8 @@ const PromoSelect = ({ show, handleClose, item }) => {
             </Button>
           )}
         </div>
-      </Offcanvas.Body>
-    </Offcanvas>
+      </div>
+    </Drawer>
   );
 };
 

@@ -41,6 +41,8 @@ const addItem = (item, amount) => {
     price: item.price,
     total: item.price * amount,
     quantity: amount,
+    weight: item.weight,
+    totalWeight: item.weight * amount,
   };
   cartCopy.push(pushItem);
 
@@ -65,6 +67,7 @@ const updateItem = (item, amount) => {
   if (!existentItem) return;
   //continue and update quantity
   existentItem.quantity = amount;
+  existentItem.totalWeight = amount * existentItem.weight;
   existentItem.total = amount * existentItem.price;
 
   //validate result
