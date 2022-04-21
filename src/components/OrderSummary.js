@@ -6,13 +6,14 @@ const { Option } = Select;
 const OrderSummary = ({
   cart,
   routes,
-  recipientInfo,
   total,
   handleSelectBranch,
   selectBranch,
   finalTotal,
   deliveryFare,
   handleBackToConfirm,
+  orderConfirmModal,
+  paymentState,
 }) => {
   return (
     <Col
@@ -91,13 +92,15 @@ const OrderSummary = ({
             จัดส่งจาก
             <Select
               bordered={false}
+              dropdownMatchSelectWidth={false}
               defaultValue={0}
               onChange={handleSelectBranch}
               value={selectBranch}
+              disabled={paymentState}
             >
               {routes.map((obj, index) => {
                 return (
-                  <Option key={obj.brId + index} value={index}>
+                  <Option key={index} value={index}>
                     <div
                       style={{
                         display: "flex",
@@ -125,18 +128,10 @@ const OrderSummary = ({
               className="cart-price"
             />
           </div>
-          {/*           
-          <div style={{ display: "flex" }}>
-            <Input
-              placeholder="กรอกรหัสโปรโมชัน (ถ้ามี)"
-              style={{ flex: 1, marginRight: 8 }}
-            />
-            <Button>ตรวจสอบ</Button>
-          </div> */}
-
           <Input
             placeholder="กรอกรหัสโปรโมชัน (ถ้ามี)"
             style={{ width: "60%" }}
+            disabled={paymentState}
           />
           <div style={{ display: "flex" }}>
             <span style={{ flex: 1 }}>ยอดรวมทั้งหมด:</span>
@@ -189,13 +184,15 @@ const OrderSummary = ({
             flexDirection: "row",
             flex: 4,
           }}
+          onClick={orderConfirmModal}
+          disabled={paymentState}
         >
           <div
             style={{
               flex: 1,
             }}
           >
-            ยืนยันข้อมูลจัดส่ง
+            {paymentState ? "รอการชำระเงิน" : "ยืนยันคำสั่งซื้อ"}
           </div>
           <div
             style={{

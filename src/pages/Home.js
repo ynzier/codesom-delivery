@@ -6,6 +6,7 @@ import {
   FrownOutlined,
 } from "@ant-design/icons";
 import NumberFormat from "react-number-format";
+import { usePromiseTracker, trackPromise } from "react-promise-tracker";
 import {
   Row,
   Col,
@@ -15,6 +16,7 @@ import {
   Button,
   ConfigProvider,
   notification,
+  Modal,
 } from "antd";
 import Preloader from "components/Preloader";
 import PromoCarousel from "../components/PromoCarousel";
@@ -29,8 +31,13 @@ import productService from "services/product.service";
 import branchService from "services/branch.service";
 import cartStorageService from "services/cartStorage.service";
 import lalamoveService from "services/lalamove.service";
+import QRCodeContainer from "components/QRCodeContainer";
+import orderService from "services/order.service";
+import FindingRider from "components/FindingRider";
 
 const { Header, Footer, Content } = Layout;
+const { confirm } = Modal;
+
 const { TabPane } = Tabs;
 const customizeRenderEmpty = () => (
   <div style={{ textAlign: "center" }}>
@@ -42,10 +49,14 @@ const Home = () => {
   const [cart, setCart] = useState([]);
   const [show, setShow] = useState(false);
   const [total, setTotal] = useState(0);
+  const [paymentState, setPaymentState] = useState(false);
+  const [qrURL, setQrURL] = useState("");
   const [toConfirm, setToConfirm] = useState(false);
+  const [chrgInfo, setChrgInfo] = useState({});
   const [selectBranch, setSelectBranch] = useState(0);
   const [deliveryFare, setDeliveryFare] = useState(0);
   const [routes, setRoutes] = useState([]);
+  const [summaryCart, setSummaryCart] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
   const [recipientInfo, setRecipientInfo] = useState({});
@@ -60,6 +71,78 @@ const Home = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [confirmPosition, setConfirmPosition] = useState({});
   const [loading, setLoading] = useState(true);
+  const [confirmPaymentState, setConfirmPaymentState] = useState(false);
+  const [payTotal, setPayTotal] = useState(0);
+  const [payWithVat, setPayWithVat] = useState(0);
+  const [vat, setVat] = useState(0);
+  const [payDeliveryFare, setPayDeliveryFare] = useState(0);
+  const [payFinalTotal, setPayFinalTotal] = useState(0);
+  const [totalQuantity, setTotalQuantity] = useState(undefined);
+  const [lalaInfo, setLalaInfo] = useState({});
+  const { promiseInProgress: gettingQR } = usePromiseTracker({
+    area: "getQRCode",
+  });
+  const handlePaymentState = async () => {
+    notification.success({
+      message: "การชำระเงินเสร็จสิ้น!",
+      description: "ระบบกำลังเตรียมการจัดส่ง...",
+      duration: 5,
+    });
+
+    const data = {
+      route: routes[selectBranch],
+      recipientInfo: recipientInfo,
+      cart: summaryCart,
+      chrgInfo: chrgInfo,
+      orderHeader: {
+        payWithVat: +payWithVat.toFixed(2),
+        payTotal: +payTotal.toFixed(2),
+        payFinalTotal: +payFinalTotal.toFixed(2),
+        payDeliveryFare: +payDeliveryFare.toFixed(2),
+        totalQuantity: totalQuantity,
+        vat: +vat.toFixed(2),
+        omiseNet: chrgInfo.net / 100,
+      },
+    };
+    await lalamoveService
+      .doTransaction(data)
+      .then((res) => {
+        console.log(res.data);
+        setLalaInfo(res.data.lalaInfo);
+
+        handleClearCart();
+        setConfirmPaymentState(true);
+      })
+      .catch((err) => console.log(err));
+  };
+  const handleOrderConfirm = async () => {
+    await orderService
+      .getQRCodeDelivery({
+        brId: routes[selectBranch].brId,
+        ordItems: cart,
+        orderData: recipientInfo,
+        amount: finalTotal,
+      })
+      .then((res) => {
+        console.log(res.data);
+        setChrgInfo(res.data);
+        setQrURL(res.data.image);
+        setPaymentState(true);
+      })
+      .catch((error) => {
+        const resMessage =
+          (error.response &&
+            error.response.data &&
+            error.response.data.message) ||
+          error.message ||
+          error.toString();
+        console.log(resMessage);
+        notification.error({
+          message: "พบข้อผิดพลาด!",
+          description: resMessage,
+        });
+      });
+  };
   const handleShowMap = () => {
     setShowMapModal(true);
   };
@@ -68,13 +151,13 @@ const Home = () => {
     setSelectBranch(index);
   };
   const handleBackToConfirm = () => {
+    setPaymentState(false);
     setToConfirm(false);
   };
   const handleRouteRequest = async (destinationInfo) => {
     if (mapConfirm == false) {
       return openNotificationWithIcon("error");
     }
-    setRecipientInfo(destinationInfo);
     const sendData = {
       coordinates: {
         lat: confirmPosition.lat.toString(),
@@ -83,19 +166,70 @@ const Home = () => {
       address: destinationInfo.recipientAddr,
       quantity: totalAmount,
       weight: totalWeight,
+      ordItems: cart,
     };
     console.log(sendData);
+    // setToConfirm(true);
+    // setRecipientInfo(destinationInfo);
+    // var resData = [
+    //   {
+    //     brId: 0,
+    //     brName: "เซนทรัลปิ่นเกล้า",
+    //     brTel: "0865419870",
+    //     quotationId: "1222312232",
+    //     destinationId: "23228998",
+    //     deliveryFare: parseInt("43"),
+    //   },
+    //   {
+    //     brId: 1,
+    //     brName: "Central Pinklao",
+    //     brTel: "0654987989",
+    //     quotationId: "1233122322",
+    //     destinationId: "232289298",
+    //     deliveryFare: parseInt("54"),
+    //   },
+    //   {
+    //     brId: 2,
+    //     brName: "Central Rama3 ",
+    //     brTel: "0909990000",
+    //     quotationId: "12413122312",
+    //     destinationId: "232289928",
+    //     deliveryFare: parseInt("41"),
+    //   },
+    // ];`
+    // setRoutes(resData);
+    // setDeliveryFare(resData[0].deliveryFare);
+    // setFinalTotal(total + deliveryFare);
     await lalamoveService
       .getFare(sendData)
       .then((res) => {
         console.log(res.data);
-        setToConfirm(true);
         setRecipientInfo(destinationInfo);
-        setRoutes(res.data);
-        setDeliveryFare(res.data[0].deliveryFare);
+        setRoutes(res.data.quotations);
+        setDeliveryFare(res.data.quotations[0].deliveryFare);
         setFinalTotal(total + deliveryFare);
+        setTotalQuantity(res.data.totalQuantity);
+        setSummaryCart(cart);
+        setPayWithVat(total);
+        setPayTotal(total / 1.07);
+        setPayDeliveryFare(res.data.quotations[0].deliveryFare);
+        setVat(total - total / 1.07);
+        setPayFinalTotal(total + res.data.quotations[0].deliveryFare);
+        setToConfirm(true);
       })
-      .catch((err) => console.log(err));
+      .catch((error) => {
+        const resMessage =
+          (error.response &&
+            error.response.data &&
+            error.response.data.message) ||
+          error.message ||
+          error.toString();
+        console.log(resMessage);
+        notification.error({
+          message: "พบข้อผิดพลาด!",
+          description: resMessage,
+        });
+      });
   };
   const fetchCart = () => {
     const prevCart = cartStorageService.getItem();
@@ -163,7 +297,17 @@ const Home = () => {
         .getBranchDelivery()
         .then((res) => setBranchData(res.data));
     } catch (error) {
-      console.log(error);
+      const resMessage =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      console.log(resMessage);
+      notification.error({
+        message: "พบข้อผิดพลาด!",
+        description: resMessage,
+      });
     }
     setLoading(false);
   };
@@ -194,7 +338,7 @@ const Home = () => {
     return () => {};
   }, [item]);
   useEffect(() => {
-    if (toConfirm) {
+    if (toConfirm && routes.length > 0) {
       setDeliveryFare(routes[selectBranch].deliveryFare);
       setFinalTotal(total + deliveryFare);
     }
@@ -208,7 +352,21 @@ const Home = () => {
         "คุณลูกค้า กรุณาเลือกตำแหน่งที่ต้องการให้เราจัดส่งสินค้าให้ ก่อนทำรายการ",
     });
   };
-
+  const orderConfirmModal = () => {
+    confirm({
+      tital: "ยืนยันคำสั่งซื้อ",
+      content: "ท่านต้องการยืนยันคำสั่งซื้อหรือไม่ ?",
+      okText: "ยืนยัน",
+      cancelText: "ย้อนกลับ",
+      centered: true,
+      okButtonProps: { style: { width: 90 } },
+      cancelButtonProps: { style: { width: 90 } },
+      confirmLoading: gettingQR,
+      onOk() {
+        trackPromise(handleOrderConfirm(), "getQRCode");
+      },
+    });
+  };
   return (
     <>
       <Preloader show={loading} />
@@ -234,16 +392,22 @@ const Home = () => {
         <Header className="desktop">
           <div style={{ display: "flex" }}>
             <div style={{ flex: 1 }}>
-              <img
-                src={require("../assets/logo-white.png")}
-                height="38"
-                alt=""
-                style={{
-                  marginRight: 16,
-                  boxShadow: "0 8px 8px rgba(0, 0, 0, 0.10)",
+              <a
+                onClick={() => {
+                  window.location.reload();
                 }}
-              />
-              <span style={{ fontSize: 18, fontWeight: 500 }}>Codesom</span>
+              >
+                <img
+                  src={require("../assets/logo-white.png")}
+                  height="38"
+                  alt=""
+                  style={{
+                    marginRight: 16,
+                    boxShadow: "0 8px 8px rgba(0, 0, 0, 0.10)",
+                  }}
+                />
+                <span style={{ fontSize: 18, fontWeight: 500 }}>Codesom</span>
+              </a>
             </div>
             <Button
               type="primary"
@@ -284,51 +448,119 @@ const Home = () => {
               }}
               className="hovernow"
             >
-              <Row>
-                <Col md={15}>
-                  <PromoCarousel promo={promoData} />
-                </Col>
-                {showDelivery ? (
-                  toConfirm ? (
-                    <OrderSummary
-                      cart={cart}
-                      routes={routes}
-                      recipientInfo={recipientInfo}
-                      handleSelectBranch={handleSelectBranch}
-                      selectBranch={selectBranch}
-                      total={total}
-                      finalTotal={finalTotal}
-                      deliveryFare={deliveryFare}
-                      handleBackToConfirm={handleBackToConfirm}
-                    />
+              {confirmPaymentState ? (
+                <FindingRider
+                  summaryCart={summaryCart}
+                  lalaInfo={lalaInfo}
+                  payDeliveryFare={payDeliveryFare}
+                  payTotal={payTotal}
+                  vat={vat}
+                  payFinalTotal={payFinalTotal}
+                  recipientInfo={recipientInfo}
+                />
+              ) : (
+                <Row>
+                  <Col md={15}>
+                    {paymentState ? (
+                      <QRCodeContainer
+                        qrURL={qrURL}
+                        chrgInfo={chrgInfo}
+                        confirmPaymentState={confirmPaymentState}
+                        handlePaymentState={handlePaymentState}
+                      />
+                    ) : (
+                      <PromoCarousel promo={promoData} />
+                    )}
+                  </Col>
+                  {showDelivery ? (
+                    toConfirm ? (
+                      <OrderSummary
+                        cart={cart}
+                        routes={routes}
+                        recipientInfo={recipientInfo}
+                        handleSelectBranch={handleSelectBranch}
+                        selectBranch={selectBranch}
+                        total={total}
+                        finalTotal={finalTotal}
+                        deliveryFare={deliveryFare}
+                        handleBackToConfirm={handleBackToConfirm}
+                        orderConfirmModal={orderConfirmModal}
+                        paymentState={paymentState}
+                      />
+                    ) : (
+                      <DeliveryInfo
+                        handleSetDelivery={handleSetDelivery}
+                        handleShowModal={handleShowMap}
+                        confirmPosition={confirmPosition}
+                        mapConfirm={mapConfirm}
+                        handleRouteRequest={handleRouteRequest}
+                      />
+                    )
                   ) : (
-                    <DeliveryInfo
-                      handleSetDelivery={handleSetDelivery}
-                      handleShowModal={handleShowMap}
-                      confirmPosition={confirmPosition}
-                      mapConfirm={mapConfirm}
-                      handleRouteRequest={handleRouteRequest}
-                    />
-                  )
-                ) : (
-                  <Col md={9} style={{ padding: "16px 0px" }}>
-                    <Row
-                      style={{
-                        overflow: "auto",
-                        height: 650,
-                        padding: "0px 20px",
-                      }}
-                    >
-                      <Tabs
-                        defaultActiveKey="1"
-                        onChange={() => {}}
-                        style={{ width: "100%" }}
+                    <Col md={9} style={{ padding: "16px 0px" }}>
+                      <Row
+                        style={{
+                          overflow: "auto",
+                          height: 650,
+                          padding: "0px 20px",
+                        }}
                       >
-                        <TabPane tab="โปรโมชัน" key="1">
-                          <ConfigProvider renderEmpty={customizeRenderEmpty}>
+                        <Tabs
+                          defaultActiveKey="1"
+                          onChange={() => {}}
+                          style={{ width: "100%" }}
+                        >
+                          <TabPane tab="โปรโมชัน" key="1">
+                            <ConfigProvider renderEmpty={customizeRenderEmpty}>
+                              <List
+                                grid={{ column: 2, gutter: 16 }}
+                                dataSource={promoData}
+                                loading={loading}
+                                renderItem={(items) => (
+                                  <List.Item className="onhover">
+                                    <img
+                                      width={192}
+                                      height={192}
+                                      style={{ objectFit: "cover" }}
+                                      src={items.image?.imgObj}
+                                      alt=""
+                                    />
+                                    <div className="price">{items.price}฿</div>
+                                    <Row>
+                                      <Col span={18} style={{ padding: "8px" }}>
+                                        <div className="description">
+                                          {items.name}
+                                        </div>
+                                      </Col>
+                                      <Col span={6}>
+                                        <div
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            flex: 1,
+                                            padding: 14,
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                          }}
+                                        >
+                                          <PlusCircleOutlined
+                                            className="plus"
+                                            onClick={() => {
+                                              toggleShow(items);
+                                            }}
+                                          />
+                                        </div>
+                                      </Col>
+                                    </Row>
+                                  </List.Item>
+                                )}
+                              />
+                            </ConfigProvider>
+                          </TabPane>
+                          <TabPane tab="เมนูทั้งหมด" key="2">
                             <List
                               grid={{ column: 2, gutter: 16 }}
-                              dataSource={promoData}
+                              dataSource={productData}
                               loading={loading}
                               renderItem={(items) => (
                                 <List.Item className="onhover">
@@ -369,152 +601,107 @@ const Home = () => {
                                 </List.Item>
                               )}
                             />
-                          </ConfigProvider>
-                        </TabPane>
-                        <TabPane tab="เมนูทั้งหมด" key="2">
-                          <List
-                            grid={{ column: 2, gutter: 16 }}
-                            dataSource={productData}
-                            loading={loading}
-                            renderItem={(items) => (
-                              <List.Item className="onhover">
-                                <img
-                                  width={192}
-                                  height={192}
-                                  style={{ objectFit: "cover" }}
-                                  src={items.image?.imgObj}
-                                  alt=""
-                                />
-                                <div className="price">{items.price}฿</div>
-                                <Row>
-                                  <Col span={18} style={{ padding: "8px" }}>
-                                    <div className="description">
-                                      {items.name}
-                                    </div>
-                                  </Col>
-                                  <Col span={6}>
-                                    <div
-                                      style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        flex: 1,
-                                        padding: 14,
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                      }}
-                                    >
-                                      <PlusCircleOutlined
-                                        className="plus"
-                                        onClick={() => {
-                                          toggleShow(items);
-                                        }}
-                                      />
-                                    </div>
-                                  </Col>
-                                </Row>
-                              </List.Item>
-                            )}
-                          />
-                        </TabPane>
-                        <TabPane tab="ข้อมูลสาขา" key="3">
-                          <List
-                            itemLayout="horizontal"
-                            dataSource={branchData}
-                            loading={loading}
-                            renderItem={(item) => {
-                              let openTime, closeTime;
+                          </TabPane>
+                          <TabPane tab="ข้อมูลสาขา" key="3">
+                            <List
+                              itemLayout="horizontal"
+                              dataSource={branchData}
+                              loading={loading}
+                              renderItem={(item) => {
+                                let openTime, closeTime;
 
-                              if (item.brOpenTime) {
-                                openTime =
-                                  item.brOpenTime.split(":", 3)[0] +
-                                  ":" +
-                                  item.brOpenTime.split(":", 3)[1];
-                              }
-                              if (item.brCloseTime) {
-                                closeTime =
-                                  item.brCloseTime.split(":", 3)[0] +
-                                  ":" +
-                                  item.brCloseTime.split(":", 3)[1];
-                              }
-                              return (
-                                <List.Item
-                                  actions={[
-                                    <a
-                                      key="location"
-                                      className="branch-button"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      href={`http://maps.google.com/maps?&z=15&mrt=yp&t=m&q=${item.coordinateLat}+${item.coordinateLng}`}
-                                    >
-                                      <Icon
-                                        icon="carbon:location-filled"
-                                        width={24}
-                                        height={24}
-                                      />
-                                    </a>,
-                                    <a
-                                      key="tel"
-                                      className="branch-button"
-                                      href={"tel:+66" + item.brTel}
-                                    >
-                                      <Icon
-                                        icon="carbon:phone-filled"
-                                        width={24}
-                                        height={24}
-                                      />
-                                    </a>,
-                                  ]}
-                                >
-                                  <List.Item.Meta
-                                    title={
-                                      <b style={{ fontSize: 16 }}>
-                                        {item.brName}
-                                      </b>
-                                    }
-                                    description={
-                                      <div>
-                                        เวลาทำการ: {openTime} - {closeTime}
-                                      </div>
-                                    }
-                                  />
-                                </List.Item>
-                              );
-                            }}
-                          />
-                        </TabPane>
-                      </Tabs>
-                    </Row>
-                    <div style={{ padding: 20 }}>
-                      <Button
-                        type="primary"
-                        block
-                        style={{ display: "flex", flexDirection: "row" }}
-                        onClick={toggleShowCart}
-                      >
-                        <div
-                          style={{
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
+                                if (item.brOpenTime) {
+                                  openTime =
+                                    item.brOpenTime.split(":", 3)[0] +
+                                    ":" +
+                                    item.brOpenTime.split(":", 3)[1];
+                                }
+                                if (item.brCloseTime) {
+                                  closeTime =
+                                    item.brCloseTime.split(":", 3)[0] +
+                                    ":" +
+                                    item.brCloseTime.split(":", 3)[1];
+                                }
+                                return (
+                                  <List.Item
+                                    actions={[
+                                      <a
+                                        key="location"
+                                        className="branch-button"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        href={`http://maps.google.com/maps?&z=15&mrt=yp&t=m&q=${item.coordinateLat}+${item.coordinateLng}`}
+                                      >
+                                        <Icon
+                                          icon="carbon:location-filled"
+                                          width={24}
+                                          height={24}
+                                        />
+                                      </a>,
+                                      <a
+                                        key="tel"
+                                        className="branch-button"
+                                        href={"tel:+66" + item.brTel}
+                                      >
+                                        <Icon
+                                          icon="carbon:phone-filled"
+                                          width={24}
+                                          height={24}
+                                        />
+                                      </a>,
+                                    ]}
+                                  >
+                                    <List.Item.Meta
+                                      title={
+                                        <b style={{ fontSize: 16 }}>
+                                          {item.brName}
+                                        </b>
+                                      }
+                                      description={
+                                        <div>
+                                          เวลาทำการ: {openTime} - {closeTime}
+                                        </div>
+                                      }
+                                    />
+                                  </List.Item>
+                                );
+                              }}
+                            />
+                          </TabPane>
+                        </Tabs>
+                      </Row>
+                      <div style={{ padding: 20 }}>
+                        <Button
+                          type="primary"
+                          block
+                          style={{ display: "flex", flexDirection: "row" }}
+                          onClick={toggleShowCart}
                         >
-                          <ShoppingFilled style={{ marginRight: 4 }} />
-                          {totalAmount}
-                        </div>
-                        <div style={{ flex: 1 }}>ออเดอร์ของคุณ</div>
-                        <NumberFormat
-                          value={total}
-                          decimalScale={2}
-                          fixedDecimalScale={true}
-                          decimalSeparator="."
-                          displayType={"text"}
-                          thousandSeparator={true}
-                          suffix="฿"
-                        />
-                      </Button>
-                    </div>
-                  </Col>
-                )}
-              </Row>
+                          <div
+                            style={{
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <ShoppingFilled style={{ marginRight: 4 }} />
+                            {totalAmount}
+                          </div>
+                          <div style={{ flex: 1 }}>ออเดอร์ของคุณ</div>
+                          <NumberFormat
+                            value={total}
+                            decimalScale={2}
+                            fixedDecimalScale={true}
+                            decimalSeparator="."
+                            displayType={"text"}
+                            thousandSeparator={true}
+                            suffix="฿"
+                          />
+                        </Button>
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              )}
             </div>
           </div>
         </Content>

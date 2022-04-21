@@ -2,6 +2,7 @@ import React from "react";
 import { Row, Col, Button, Input, Space, Form } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
+import { usePromiseTracker, trackPromise } from "react-promise-tracker";
 
 import Lalamove from "../assets/lalamove";
 import { Icon } from "@iconify/react";
@@ -13,16 +14,22 @@ const DeliveryInfo = ({
   mapConfirm,
   handleRouteRequest,
 }) => {
+  const { promiseInProgress: infoLoading } = usePromiseTracker({
+    area: "deliveryInfo",
+  });
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: "AIzaSyDVQ7VpCG8QO7OYtIFDZVGzQCmNld4bdm8", // ,
   });
   const [form] = Form.useForm();
-
+  const infoConfirm = (destinationInfo) => {
+    trackPromise(handleRouteRequest(destinationInfo), "deliveryInfo");
+  };
   return (
     <Col className="gutter-row" md={9}>
       <Form
         form={form}
-        onFinish={handleRouteRequest}
+        onFinish={infoConfirm}
         style={{
           padding: "32px 16px 16px 16px",
           display: "flex",
@@ -31,7 +38,7 @@ const DeliveryInfo = ({
         }}
       >
         <div style={{ flex: 1 }}>
-          <h5 style={{ marginBottom: 16}}>ข้อมูลการจัดส่ง</h5>
+          <h5 style={{ marginBottom: 16 }}>ข้อมูลการจัดส่ง</h5>
 
           <Form.Item
             name="recipientName"
@@ -43,9 +50,11 @@ const DeliveryInfo = ({
           <Form.Item
             name="recipientTel"
             rules={[
-              { required: true, message: "*ใส่เบอร์โทรศัพท์" },
-              { max: 10, message: "*ตัวเลขต้องไม่เกิน 10 ตัว" },
-              { min: 9, message: "*ใส่เบอร์โทรศัพท์ให้ครบ" },
+              {
+                required: true,
+                pattern: new RegExp(/^0[0-9]{8,9}/),
+                message: "*รูปแบบเบอร์โทรไม่ถูกต้อง",
+              },
             ]}
           >
             <Input placeholder="เบอร์โทรศัพท์" />
@@ -170,6 +179,7 @@ const DeliveryInfo = ({
               flexDirection: "row",
               flex: 4,
             }}
+            loading={infoLoading}
           >
             <div
               style={{
