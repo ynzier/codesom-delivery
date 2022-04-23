@@ -6,4 +6,15 @@ const getFare = async (data) => {
 const doTransaction = async (data) => {
   return await http.post(prefix + "/doTransaction", data);
 };
-export default { getFare, doTransaction };
+const getDeliveryStatus = async (orderId) => {
+  return await http.get(prefix + "/getDeliveryStatus/" + orderId);
+};
+const getTransactionHistoryByTel = async (tel) => {
+  return await http.get(prefix + "/getTransactionHistoryByTel/" + tel);
+};
+export default {
+  getFare,
+  doTransaction,
+  getDeliveryStatus,
+  getTransactionHistoryByTel,
+};

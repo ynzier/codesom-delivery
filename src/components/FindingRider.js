@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Divider, Steps, Space, Button } from "antd";
 import NumberFormat from "react-number-format";
-import orderService from "services/order.service";
+import lalamoveService from "services/lalamove.service";
 const { Step } = Steps;
 
 const FindingRider = ({
@@ -12,44 +12,50 @@ const FindingRider = ({
   payFinalTotal,
   vat,
   recipientInfo,
+  orderId,
+  handleResetDefulatState,
 }) => {
-  // const [breaker, setBreaker] = useState(0);
+  const [status, setStatus] = useState(0);
 
-  // useEffect(() => {
-  //   const checkStatus = setInterval(() => {
-  //     if (qrURL != "" && chrgInfo != "{}")
-  //       if (breaker == 0) {
-  //         orderService
-  //           .checkDeliveryCharge(chrgInfo.chrgId)
-  //           .then((res) => {
-  //             if (res.data.message == "successful") {
-  //               setBreaker(breaker + 1);
-  //             }
-  //             if (res.data.message == "not done") console.log("waiting...");
-  //           })
-  //           .catch((error) => {
-  //             let resMessage =
-  //               (error.response &&
-  //                 error.response.data &&
-  //                 error.response.data.message) ||
-  //               error.message ||
-  //               error.toString();
-  //             clearInterval(checkStatus);
-  //             if (resMessage == "payment rejected")
-  //               resMessage = "การชำระเงินถูกปฏิเสธ";
-  //             console.log(resMessage);
-  //           });
-  //       }
-  //     if (breaker == 1 && !confirmPaymentState) {
-  //       clearInterval(checkStatus);
-  //       handlePaymentState();
-  //     }
-  //   }, 2000);
+  const [breaker, setBreaker] = useState(0);
 
-  //   return () => {
-  //     clearInterval(checkStatus);
-  //   };
-  // }, [qrURL, chrgInfo, breaker]);
+  useEffect(() => {
+    const checkStatus = setInterval(() => {
+      if (orderId)
+        if (breaker == 0) {
+          lalamoveService
+            .getDeliveryStatus(orderId)
+            .then((res) => {
+              if (res.data.lalaStatus == "COMPLETED") {
+                setStatus(3);
+                setBreaker(breaker + 1);
+              }
+              if (res.data.lalaStatus == "ASSIGNING_DRIVER") setStatus(0);
+              if (res.data.lalaStatus == "ON_GOING") setStatus(1);
+              if (res.data.lalaStatus == "PICKED_UP") setStatus(2);
+            })
+            .catch((error) => {
+              let resMessage =
+                (error.response &&
+                  error.response.data &&
+                  error.response.data.message) ||
+                error.message ||
+                error.toString();
+              clearInterval(checkStatus);
+              if (resMessage == "payment rejected")
+                resMessage = "การชำระเงินถูกปฏิเสธ";
+              console.log(resMessage);
+            });
+        }
+      if (breaker == 1 && status > 2) {
+        clearInterval(checkStatus);
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(checkStatus);
+    };
+  }, [orderId, breaker]);
 
   return (
     <Row className="summary-container">
@@ -65,10 +71,22 @@ const FindingRider = ({
           }}
         >
           <Steps direction="vertical" style={{ height: 400 }}>
-            <Step status="finish" title="กำลังหาไรเดอร์" />
-            <Step status="finish" title="เตรียมสินค้า" />
-            <Step status="finish" title="อยู่ระหว่างนำส่ง" />
-            <Step status="process" title="เสร็จสิ้น" />
+            <Step
+              status={status > 0 ? "finish" : "process"}
+              title="ค้นหาไรเดอร์"
+            />
+            <Step
+              status={status > 1 ? "finish" : status == 1 ? "process" : "wait"}
+              title="กำลังไปรับสินค้า"
+            />
+            <Step
+              status={status == 2 ? "process" : status > 2 ? "finish" : "wait"}
+              title="อยู่ระหว่างนำส่ง"
+            />
+            <Step
+              status={status == 3 ? "finish" : status > 3 ? "error" : "wait"}
+              title="นำส่งเสร็จสิ้น"
+            />
           </Steps>
         </Col>
         <Divider style={{ marginTop: 15, height: "95%" }} type="vertical" />
@@ -96,7 +114,7 @@ const FindingRider = ({
               </h5>
             </Space>
             <Space direction="vertical" style={{ textAlign: "right" }}>
-              <span>คำสั่งซื้อ #2312219</span>
+              <span>คำสั่งซื้อ #{orderId}</span>
               <span
                 style={{
                   width: 100,
@@ -234,7 +252,11 @@ const FindingRider = ({
             />
           </div>
           <div style={{ width: "100%", marginTop: 8 }}>
-            <Button type="primary" style={{ float: "right", width: 150 }}>
+            <Button
+              type="primary"
+              style={{ float: "right", width: 150 }}
+              onClick={handleResetDefulatState}
+            >
               เลือกซื้อเพิ่ม
             </Button>
           </div>

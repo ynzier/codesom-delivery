@@ -17,6 +17,8 @@ import {
   ConfigProvider,
   notification,
   Modal,
+  Input,
+  Popover,
 } from "antd";
 import Preloader from "components/Preloader";
 import PromoCarousel from "../components/PromoCarousel";
@@ -34,8 +36,10 @@ import lalamoveService from "services/lalamove.service";
 import QRCodeContainer from "components/QRCodeContainer";
 import orderService from "services/order.service";
 import FindingRider from "components/FindingRider";
+import FindOrder from "components/FindOrder";
 
 const { Header, Footer, Content } = Layout;
+const { Search } = Input;
 const { confirm } = Modal;
 
 const { TabPane } = Tabs;
@@ -45,6 +49,7 @@ const customizeRenderEmpty = () => (
     <p>ไม่มีโปรโมชันในขณะนี้</p>
   </div>
 );
+
 const Home = () => {
   const [cart, setCart] = useState([]);
   const [show, setShow] = useState(false);
@@ -79,9 +84,40 @@ const Home = () => {
   const [payFinalTotal, setPayFinalTotal] = useState(0);
   const [totalQuantity, setTotalQuantity] = useState(undefined);
   const [lalaInfo, setLalaInfo] = useState({});
+  const [orderId, setOrderId] = useState(undefined);
+  const [toFindOrder, setToFindOrder] = useState(false);
+  const [historyData, setHistoryData] = useState([]);
   const { promiseInProgress: gettingQR } = usePromiseTracker({
     area: "getQRCode",
   });
+  const { promiseInProgress: findingTel } = usePromiseTracker({
+    area: "findingTel",
+  });
+
+  const handleFindOrder = async (findTel) => {
+    await trackPromise(
+      new Promise((resolve) =>
+        setTimeout(
+          () => resolve(lalamoveService.getTransactionHistoryByTel(findTel)),
+          2000
+        )
+      ),
+      "findingTel"
+    ).then((res) => {
+      setHistoryData(res.data);
+      setToFindOrder(true);
+    });
+  };
+  const handleResetDefulatState = async () => {
+    setShow(false);
+    setPaymentState(false);
+    setToConfirm(false);
+    setMapConfirm(false);
+    setShowDelivery(false);
+    setCartShow(false);
+    setShowMapModal(false);
+    setConfirmPaymentState(false);
+  };
   const handlePaymentState = async () => {
     notification.success({
       message: "การชำระเงินเสร็จสิ้น!",
@@ -109,11 +145,23 @@ const Home = () => {
       .then((res) => {
         console.log(res.data);
         setLalaInfo(res.data.lalaInfo);
-
+        setOrderId(res.data.orderId);
         handleClearCart();
         setConfirmPaymentState(true);
       })
-      .catch((err) => console.log(err));
+      .catch((error) => {
+        const resMessage =
+          (error.response &&
+            error.response.data &&
+            error.response.data.message) ||
+          error.message ||
+          error.toString();
+        console.log(resMessage);
+        notification.error({
+          message: "พบข้อผิดพลาด!",
+          description: resMessage,
+        });
+      });
   };
   const handleOrderConfirm = async () => {
     await orderService
@@ -367,6 +415,28 @@ const Home = () => {
       },
     });
   };
+  const [errorTel, setErrorTel] = useState(undefined);
+  const findOrder = (
+    <div style={{ width: 300 }}>
+      <b>ค้นหาด้วยเบอร์โทรศัพท์</b>
+      <Search
+        placeholder="เบอร์โทรศัพท์"
+        loading={findingTel}
+        enterButton
+        onSearch={(value) => {
+          const reg = /^0[0-9]{8,9}/;
+          setErrorTel("");
+          if (reg.test(value) == false) {
+            setErrorTel("*รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง");
+          } else {
+            handleFindOrder(value);
+          }
+        }}
+        style={{ marginTop: 8 }}
+      />
+      <span style={{ color: "red" }}>{errorTel}</span>
+    </div>
+  );
   return (
     <>
       <Preloader show={loading} />
@@ -409,15 +479,19 @@ const Home = () => {
                 <span style={{ fontSize: 18, fontWeight: 500 }}>Codesom</span>
               </a>
             </div>
-            <Button
-              type="primary"
-              style={{ alignSelf: "center", justifySelf: "center" }}
-              size="large"
-              shape="round"
-              onClick={toggleShow}
+            <Popover
+              placement="bottomRight"
+              content={findOrder}
+              trigger="click"
             >
-              ตรวจสอบออเดอร์ <BellOutlined style={{ fontSize: 18 }} />
-            </Button>
+              <Button
+                type="primary"
+                style={{ alignSelf: "center", justifySelf: "center" }}
+                size="large"
+              >
+                ตรวจสอบออเดอร์ <BellOutlined style={{ fontSize: 18 }} />
+              </Button>
+            </Popover>
           </div>
         </Header>
         <Content className="mobile">
@@ -448,7 +522,9 @@ const Home = () => {
               }}
               className="hovernow"
             >
-              {confirmPaymentState ? (
+              {toFindOrder ? (
+                <FindOrder historyData={historyData} />
+              ) : confirmPaymentState ? (
                 <FindingRider
                   summaryCart={summaryCart}
                   lalaInfo={lalaInfo}
@@ -457,6 +533,8 @@ const Home = () => {
                   vat={vat}
                   payFinalTotal={payFinalTotal}
                   recipientInfo={recipientInfo}
+                  orderId={orderId}
+                  handleResetDefulatState={handleResetDefulatState}
                 />
               ) : (
                 <Row>
@@ -641,7 +719,10 @@ const Home = () => {
                                       <a
                                         key="tel"
                                         className="branch-button"
-                                        href={"tel:+66" + item.brTel}
+                                        href={
+                                          "tel:" +
+                                          item.brTel.replace(/^0/, "+66")
+                                        }
                                       >
                                         <Icon
                                           icon="carbon:phone-filled"
