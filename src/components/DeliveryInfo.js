@@ -13,6 +13,7 @@ const DeliveryInfo = ({
   confirmPosition,
   mapConfirm,
   handleRouteRequest,
+  recipientInfo,
 }) => {
   const { promiseInProgress: infoLoading } = usePromiseTracker({
     area: "deliveryInfo",
@@ -30,6 +31,7 @@ const DeliveryInfo = ({
       <Form
         form={form}
         onFinish={infoConfirm}
+        initialValues={recipientInfo}
         style={{
           padding: "32px 16px 16px 16px",
           display: "flex",
@@ -52,7 +54,7 @@ const DeliveryInfo = ({
             rules={[
               {
                 required: true,
-                pattern: new RegExp(/^0[0-9]{8,9}/),
+                pattern: new RegExp(/^0[0-9]{8,9}$/),
                 message: "*รูปแบบเบอร์โทรไม่ถูกต้อง",
               },
             ]}

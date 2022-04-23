@@ -7,10 +7,11 @@ const PromoSelect = ({ show, handleClose, item }) => {
   const [inCart, setInCart] = useState(false);
 
   const handleCart = () => {
+    if (amount == null) return;
     if (inCart) {
       cartStorageService.updateItem(item, amount);
     } else cartStorageService.addItem(item, amount);
-    console.log("added");
+
     handleClose();
   };
   const handleRemove = () => {
@@ -18,19 +19,16 @@ const PromoSelect = ({ show, handleClose, item }) => {
       var id = { prId: item.prId, promoId: item.promoId };
       cartStorageService.removeItem(id);
     }
-    console.log("removed");
     handleClose();
   };
   useEffect(() => {
-    if (item) {
-      if (item.prId || item.promoId) {
-        var id = { prId: item.prId, promoId: item.promoId };
-        const currItem = cartStorageService.getItemById(id);
-        if (currItem?.quantity) {
-          setAmount(currItem.quantity);
-          console.log("existed");
-          setInCart(true);
-        }
+    if (item != null && item != "{}") {
+      var id = { prId: item.prId, promoId: item.promoId };
+      const currItem = cartStorageService.getItemById(id);
+      if (currItem?.quantity) {
+        setAmount(currItem.quantity);
+
+        setInCart(true);
       }
     }
     return () => {
@@ -71,10 +69,12 @@ const PromoSelect = ({ show, handleClose, item }) => {
         <div className="bottom-promo">
           <InputNumber
             min={inCart ? 0 : 1}
-            max={100000}
+            max={99}
+            maxLength={2}
             precision={0}
+            pattern="[0-9]*"
             defaultValue={1}
-            value={amount}
+            value={Number(amount)}
             style={{ textAlign: "right" }}
             onChange={(e) => {
               setAmount(e);

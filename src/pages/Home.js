@@ -310,8 +310,25 @@ const Home = () => {
     setShowMapModal((s) => !s);
   };
   const handleShowDelivery = () => {
-    setCartShow(false);
-    setShowDelivery(true);
+    if (cart.length) {
+      if (total < 20)
+        return notification.error({
+          message: "พบข้อผิดพลาด!",
+          description: "ยอดรวมสินค้าขั้นต่ำในการสั่งซื้อ คือ 20 บาท",
+        });
+      if (total > 100000)
+        return notification.error({
+          message: "พบข้อผิดพลาด!",
+          description: "ยอดรวมสินค้าสูงสุดในการสั่งซื้อ คือ 100,000 บาท",
+        });
+      setCartShow(false);
+      setShowDelivery(true);
+    } else {
+      notification.error({
+        message: "พบข้อผิดพลาด!",
+        description: "กรุณราเลือกสินค้าก่อนทำรายการ",
+      });
+    }
   };
   const handleSetDelivery = () => {
     setShowDelivery((s) => !s);
@@ -387,7 +404,7 @@ const Home = () => {
   }, [item]);
   useEffect(() => {
     if (toConfirm && routes.length > 0) {
-      setDeliveryFare(routes[selectBranch].deliveryFare);
+      setDeliveryFare(routes[selectBranch]?.deliveryFare);
       setFinalTotal(total + deliveryFare);
     }
     return () => {};
@@ -424,7 +441,7 @@ const Home = () => {
         loading={findingTel}
         enterButton
         onSearch={(value) => {
-          const reg = /^0[0-9]{8,9}/;
+          const reg = /^0[0-9]{8,9}$/;
           setErrorTel("");
           if (reg.test(value) == false) {
             setErrorTel("*รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง");
@@ -572,6 +589,7 @@ const Home = () => {
                         confirmPosition={confirmPosition}
                         mapConfirm={mapConfirm}
                         handleRouteRequest={handleRouteRequest}
+                        recipientInfo={recipientInfo}
                       />
                     )
                   ) : (

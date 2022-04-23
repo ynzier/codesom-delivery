@@ -59,9 +59,10 @@ const updateItem = (item, amount) => {
   let cartCopy = [...localCart];
 
   //find if item exists, just in case
-  let existentItem = cartCopy.find(
-    (obj) => obj.prId == item.prId || obj.promoId == item.promoId
-  );
+  let existentItem = cartCopy.find((obj) => {
+    if (item.promoId == null) return obj.prId == item.prId;
+    if (item.prId == null) return obj.promoId == item.promoId;
+  });
 
   //if it doesnt exist simply return
   if (!existentItem) return;
@@ -76,7 +77,7 @@ const updateItem = (item, amount) => {
     cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
   } else if (existentItem.quantity <= 0 && item.promoId) {
     //remove item  by filtering it from cart array
-    cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
+    cartCopy = cartCopy.filter((obj) => obj.promoId != item.promoId);
   }
 
   let cartString = JSON.stringify(cartCopy);
@@ -95,7 +96,7 @@ const removeItem = (item) => {
     cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
   } else if (item.promoId) {
     //remove item  by filtering it from cart array
-    cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
+    cartCopy = cartCopy.filter((obj) => obj.promoId != item.promoId);
   }
   let cartString = JSON.stringify(cartCopy);
   localStorage.setItem("cart", cartString);
