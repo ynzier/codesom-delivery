@@ -40,7 +40,7 @@ const content = (item) => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {obj.product?.prName}
+                {obj.product?.productName}
               </span>
             </div>
           </>

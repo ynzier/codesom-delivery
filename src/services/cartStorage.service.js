@@ -1,7 +1,7 @@
 /* 
 cart = []
 cartItem = { 
-    prId: item.prId,
+    productId: item.productId,
     promoId: item.promoId,
     name: item.name,
     price: item.price,
@@ -15,7 +15,7 @@ const getItem = () => {
   return JSON.parse(item) || [];
 };
 const getItemById = (id) => {
-  // id = { prId: number, promoId: number }
+  // id = { productId: number, promoId: number }
   let localCart = localStorage.getItem("cart");
   localCart = JSON.parse(localCart);
   //create a copy of our cart state, avoid overwritting existing state
@@ -24,8 +24,8 @@ const getItemById = (id) => {
   //look for item in cart array
   if (id.promoId)
     return cartCopy.find((cartItem) => cartItem.promoId == id.promoId);
-  else if (id.prId)
-    return cartCopy.find((cartItem) => cartItem.prId == id.prId);
+  else if (id.productId)
+    return cartCopy.find((cartItem) => cartItem.productId == id.productId);
 };
 const addItem = (item, amount) => {
   // item = { id: number , quantity: number }
@@ -35,7 +35,7 @@ const addItem = (item, amount) => {
   let cartCopy = [...localCart];
 
   const pushItem = {
-    prId: item.prId,
+    productId: item.productId,
     promoId: item.promoId,
     name: item.name,
     price: item.price,
@@ -60,8 +60,8 @@ const updateItem = (item, amount) => {
 
   //find if item exists, just in case
   let existentItem = cartCopy.find((obj) => {
-    if (item.promoId == null) return obj.prId == item.prId;
-    if (item.prId == null) return obj.promoId == item.promoId;
+    if (item.promoId == null) return obj.productId == item.productId;
+    if (item.productId == null) return obj.promoId == item.promoId;
   });
 
   //if it doesnt exist simply return
@@ -72,9 +72,9 @@ const updateItem = (item, amount) => {
   existentItem.total = amount * existentItem.price;
 
   //validate result
-  if (existentItem.quantity <= 0 && item.prId) {
+  if (existentItem.quantity <= 0 && item.productId) {
     //remove item  by filtering it from cart array
-    cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
+    cartCopy = cartCopy.filter((obj) => obj.productId != item.productId);
   } else if (existentItem.quantity <= 0 && item.promoId) {
     //remove item  by filtering it from cart array
     cartCopy = cartCopy.filter((obj) => obj.promoId != item.promoId);
@@ -91,9 +91,9 @@ const removeItem = (item) => {
   let cartCopy = [...localCart];
 
   //validate result
-  if (item.prId) {
+  if (item.productId) {
     //remove item  by filtering it from cart array
-    cartCopy = cartCopy.filter((obj) => obj.prId != item.prId);
+    cartCopy = cartCopy.filter((obj) => obj.productId != item.productId);
   } else if (item.promoId) {
     //remove item  by filtering it from cart array
     cartCopy = cartCopy.filter((obj) => obj.promoId != item.promoId);

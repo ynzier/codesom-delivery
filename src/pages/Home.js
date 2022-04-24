@@ -166,8 +166,8 @@ const Home = () => {
   const handleOrderConfirm = async () => {
     await orderService
       .getQRCodeDelivery({
-        brId: routes[selectBranch].brId,
-        ordItems: cart,
+        branchId: routes[selectBranch].branchId,
+        orderItems: cart,
         orderData: recipientInfo,
         amount: finalTotal,
       })
@@ -214,32 +214,32 @@ const Home = () => {
       address: destinationInfo.recipientAddr,
       quantity: totalAmount,
       weight: totalWeight,
-      ordItems: cart,
+      orderItems: cart,
     };
     console.log(sendData);
     // setToConfirm(true);
     // setRecipientInfo(destinationInfo);
     // var resData = [
     //   {
-    //     brId: 0,
-    //     brName: "เซนทรัลปิ่นเกล้า",
-    //     brTel: "0865419870",
+    //     branchId: 0,
+    //     branchName: "เซนทรัลปิ่นเกล้า",
+    //     branchTel: "0865419870",
     //     quotationId: "1222312232",
     //     destinationId: "23228998",
     //     deliveryFare: parseInt("43"),
     //   },
     //   {
-    //     brId: 1,
-    //     brName: "Central Pinklao",
-    //     brTel: "0654987989",
+    //     branchId: 1,
+    //     branchName: "Central Pinklao",
+    //     branchTel: "0654987989",
     //     quotationId: "1233122322",
     //     destinationId: "232289298",
     //     deliveryFare: parseInt("54"),
     //   },
     //   {
-    //     brId: 2,
-    //     brName: "Central Rama3 ",
-    //     brTel: "0909990000",
+    //     branchId: 2,
+    //     branchName: "Central Rama3 ",
+    //     branchTel: "0909990000",
     //     quotationId: "12413122312",
     //     destinationId: "232289928",
     //     deliveryFare: parseInt("41"),
@@ -284,14 +284,16 @@ const Home = () => {
     setCart(prevCart);
     return prevCart;
   };
-  // editItem = { prId:number , promoId: number}
+  // editItem = { productId:number , promoId: number}
   const handleEdit = (editItem) => {
     let getItem = {};
-    if (editItem.prId)
-      getItem = productData.find((data) => data.prId == editItem.prId);
+    if (editItem.productId)
+      getItem = productData.find(
+        (data) => data.productId == editItem.productId
+      );
     if (editItem.promoId)
       getItem = promoData.find((data) => data.promoId == editItem.promoId);
-
+    console.log(editItem);
     setItem(getItem);
     setCartShow(false);
     setShow(true);
@@ -706,17 +708,17 @@ const Home = () => {
                               renderItem={(item) => {
                                 let openTime, closeTime;
 
-                                if (item.brOpenTime) {
+                                if (item.branchOpen) {
                                   openTime =
-                                    item.brOpenTime.split(":", 3)[0] +
+                                    item.branchOpen.split(":", 3)[0] +
                                     ":" +
-                                    item.brOpenTime.split(":", 3)[1];
+                                    item.branchOpen.split(":", 3)[1];
                                 }
-                                if (item.brCloseTime) {
+                                if (item.branchClose) {
                                   closeTime =
-                                    item.brCloseTime.split(":", 3)[0] +
+                                    item.branchClose.split(":", 3)[0] +
                                     ":" +
-                                    item.brCloseTime.split(":", 3)[1];
+                                    item.branchClose.split(":", 3)[1];
                                 }
                                 return (
                                   <List.Item
@@ -739,7 +741,7 @@ const Home = () => {
                                         className="branch-button"
                                         href={
                                           "tel:" +
-                                          item.brTel.replace(/^0/, "+66")
+                                          item.branchTel.replace(/^0/, "+66")
                                         }
                                       >
                                         <Icon
@@ -753,7 +755,7 @@ const Home = () => {
                                     <List.Item.Meta
                                       title={
                                         <b style={{ fontSize: 16 }}>
-                                          {item.brName}
+                                          {item.branchName}
                                         </b>
                                       }
                                       description={

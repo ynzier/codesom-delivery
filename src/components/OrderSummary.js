@@ -108,7 +108,7 @@ const OrderSummary = ({
                         gap: "12px 12px",
                       }}
                     >
-                      <span>สาขา {obj.brName}</span>
+                      <span>สาขา {obj.branchName}</span>
                     </div>
                   </Option>
                 );

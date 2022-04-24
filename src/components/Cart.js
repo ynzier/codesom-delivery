@@ -52,7 +52,11 @@ const Cart = ({
                 <a
                   className="edit-text"
                   onClick={() => {
-                    handleEdit({ promoId: obj.promoId, prId: obj.prId });
+                    console.log(obj);
+                    handleEdit({
+                      promoId: obj.promoId,
+                      productId: obj.productId,
+                    });
                   }}
                 >
                   แก้ไข

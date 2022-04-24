@@ -16,14 +16,14 @@ const PromoSelect = ({ show, handleClose, item }) => {
   };
   const handleRemove = () => {
     if (inCart && amount == 0) {
-      var id = { prId: item.prId, promoId: item.promoId };
+      var id = { productId: item.productId, promoId: item.promoId };
       cartStorageService.removeItem(id);
     }
     handleClose();
   };
   useEffect(() => {
     if (item != null && item != "{}") {
-      var id = { prId: item.prId, promoId: item.promoId };
+      var id = { productId: item.productId, promoId: item.promoId };
       const currItem = cartStorageService.getItemById(id);
       if (currItem?.quantity) {
         setAmount(currItem.quantity);
