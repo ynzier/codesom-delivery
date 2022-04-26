@@ -29,7 +29,7 @@ const content = (item) => {
           <>
             <div style={{ display: "flex", marginBottom: 8 }}>
               <div className="item-count">
-                <b>{obj.prCount}</b>
+                <b>{obj.quantity}</b>
               </div>
               <span
                 style={{
@@ -92,7 +92,7 @@ const FindOrder = ({ historyData }) => {
                     <Space direction="vertical" style={{ textAlign: "right" }}>
                       <b>
                         <NumberFormat
-                          value={item.order.receipt.customerTotal}
+                          value={item.order.receipt.receiptTotal}
                           decimalScale={2}
                           fixedDecimalScale={true}
                           decimalSeparator="."

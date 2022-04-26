@@ -78,7 +78,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [confirmPaymentState, setConfirmPaymentState] = useState(false);
   const [payTotal, setPayTotal] = useState(0);
-  const [payWithVat, setPayWithVat] = useState(0);
   const [vat, setVat] = useState(0);
   const [payDeliveryFare, setPayDeliveryFare] = useState(0);
   const [payFinalTotal, setPayFinalTotal] = useState(0);
@@ -131,10 +130,9 @@ const Home = () => {
       cart: summaryCart,
       chrgInfo: chrgInfo,
       orderHeader: {
-        payWithVat: +payWithVat.toFixed(2),
         payTotal: +payTotal.toFixed(2),
         payFinalTotal: +payFinalTotal.toFixed(2),
-        payDeliveryFare: +payDeliveryFare.toFixed(2),
+        payDeliveryFare: +deliveryFare.toFixed(2),
         totalQuantity: totalQuantity,
         vat: +vat.toFixed(2),
         omiseNet: chrgInfo.net / 100,
@@ -196,7 +194,11 @@ const Home = () => {
   };
   const handleSelectBranch = (index) => {
     setDeliveryFare(routes[index].deliveryFare);
+    setPayDeliveryFare(routes[index].deliveryFare);
     setSelectBranch(index);
+    setPayTotal(total);
+    setPayFinalTotal(total + routes[index].deliveryFare);
+    setFinalTotal(total + routes[index].deliveryFare);
   };
   const handleBackToConfirm = () => {
     setPaymentState(false);
@@ -216,53 +218,18 @@ const Home = () => {
       weight: totalWeight,
       orderItems: cart,
     };
-    console.log(sendData);
-    // setToConfirm(true);
-    // setRecipientInfo(destinationInfo);
-    // var resData = [
-    //   {
-    //     branchId: 0,
-    //     branchName: "เซนทรัลปิ่นเกล้า",
-    //     branchTel: "0865419870",
-    //     quotationId: "1222312232",
-    //     destinationId: "23228998",
-    //     deliveryFare: parseInt("43"),
-    //   },
-    //   {
-    //     branchId: 1,
-    //     branchName: "Central Pinklao",
-    //     branchTel: "0654987989",
-    //     quotationId: "1233122322",
-    //     destinationId: "232289298",
-    //     deliveryFare: parseInt("54"),
-    //   },
-    //   {
-    //     branchId: 2,
-    //     branchName: "Central Rama3 ",
-    //     branchTel: "0909990000",
-    //     quotationId: "12413122312",
-    //     destinationId: "232289928",
-    //     deliveryFare: parseInt("41"),
-    //   },
-    // ];`
-    // setRoutes(resData);
-    // setDeliveryFare(resData[0].deliveryFare);
-    // setFinalTotal(total + deliveryFare);
+
     await lalamoveService
       .getFare(sendData)
       .then((res) => {
-        console.log(res.data);
         setRecipientInfo(destinationInfo);
         setRoutes(res.data.quotations);
         setDeliveryFare(res.data.quotations[0].deliveryFare);
-        setFinalTotal(total + deliveryFare);
+        setPayDeliveryFare(res.data.quotations[0].deliveryFare);
+        setFinalTotal(total + res.data.quotations[0].deliveryFare);
+        setVat(total - total / 1.07);
         setTotalQuantity(res.data.totalQuantity);
         setSummaryCart(cart);
-        setPayWithVat(total);
-        setPayTotal(total / 1.07);
-        setPayDeliveryFare(res.data.quotations[0].deliveryFare);
-        setVat(total - total / 1.07);
-        setPayFinalTotal(total + res.data.quotations[0].deliveryFare);
         setToConfirm(true);
       })
       .catch((error) => {
@@ -404,13 +371,6 @@ const Home = () => {
     setTotalWeight(tempWeight);
     return () => {};
   }, [item]);
-  useEffect(() => {
-    if (toConfirm && routes.length > 0) {
-      setDeliveryFare(routes[selectBranch]?.deliveryFare);
-      setFinalTotal(total + deliveryFare);
-    }
-    return () => {};
-  }, [selectBranch, toConfirm, routes, deliveryFare, total]);
 
   const openNotificationWithIcon = (type) => {
     notification[type]({

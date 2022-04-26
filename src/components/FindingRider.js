@@ -199,10 +199,10 @@ const FindingRider = ({
             </ul>
           </div>
           <Divider style={{ marginBottom: 12, marginTop: 12 }} />
-          <div style={{ display: "flex" }}>
-            <span style={{ flex: 2, textAlign: "right" }}>ราคารวม:</span>
+          <div style={{ display: "flex", color: "#c6c6c6" }}>
+            <span style={{ flex: 2, textAlign: "right" }}>ภาษี 7%:</span>
             <NumberFormat
-              value={payTotal}
+              value={vat}
               decimalScale={2}
               fixedDecimalScale={true}
               decimalSeparator="."
@@ -213,9 +213,9 @@ const FindingRider = ({
             />
           </div>
           <div style={{ display: "flex" }}>
-            <span style={{ flex: 2, textAlign: "right" }}>ภาษี 7%:</span>
+            <span style={{ flex: 2, textAlign: "right" }}>ราคารวม:</span>
             <NumberFormat
-              value={vat}
+              value={payTotal}
               decimalScale={2}
               fixedDecimalScale={true}
               decimalSeparator="."
