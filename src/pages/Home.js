@@ -123,7 +123,6 @@ const Home = () => {
       description: "ระบบกำลังเตรียมการจัดส่ง...",
       duration: 5,
     });
-
     const data = {
       route: routes[selectBranch],
       recipientInfo: recipientInfo,
@@ -138,10 +137,10 @@ const Home = () => {
         omiseNet: chrgInfo.net / 100,
       },
     };
+    console.log("doTransaction:", data);
     await lalamoveService
       .doTransaction(data)
       .then((res) => {
-        console.log(res.data);
         setLalaInfo(res.data.lalaInfo);
         setOrderId(res.data.orderId);
         handleClearCart();
@@ -162,6 +161,12 @@ const Home = () => {
       });
   };
   const handleOrderConfirm = async () => {
+    console.log("getQRCodeDelivery:", {
+      branchId: routes[selectBranch].branchId,
+      orderItems: cart,
+      orderData: recipientInfo,
+      amount: finalTotal,
+    });
     await orderService
       .getQRCodeDelivery({
         branchId: routes[selectBranch].branchId,
@@ -229,6 +234,9 @@ const Home = () => {
         setFinalTotal(total + res.data.quotations[0].deliveryFare);
         setVat(total - total / 1.07);
         setTotalQuantity(res.data.totalQuantity);
+        setPayTotal(total);
+        setPayFinalTotal(total + res.data.quotations[0].deliveryFare);
+        setFinalTotal(total + res.data.quotations[0].deliveryFare);
         setSummaryCart(cart);
         setToConfirm(true);
       })
