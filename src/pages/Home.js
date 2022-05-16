@@ -238,6 +238,7 @@ const Home = () => {
         setPayFinalTotal(total + res.data.quotations[0].deliveryFare);
         setFinalTotal(total + res.data.quotations[0].deliveryFare);
         setSummaryCart(cart);
+        setSelectBranch(0);
         setToConfirm(true);
       })
       .catch((error) => {
